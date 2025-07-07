@@ -1,7 +1,11 @@
 {
   "include": ["./src/**/*"],
   "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "target": "es2017",
+    "module": "esnext",
     "strict": true,
     "esModuleInterop": true,
     "lib": ["dom", "dom.iterable"],
