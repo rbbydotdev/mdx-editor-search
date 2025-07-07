@@ -5,13 +5,13 @@ import {
   editorSearchTerm$,
   editorSearchTermDebounced$,
   editorSearchTextNodeIndex$,
+  EmptyTextNodeIndex,
   searchOpen$,
 } from "@/search/SearchStates";
 import {
   Cell,
   debounceTime,
   lexical,
-  map,
   realmPlugin,
   rootEditor$,
   useCell,
@@ -28,19 +28,8 @@ export type TextNodeIndex = {
   offsetIndex: number[];
 };
 
-export const debouncedIndexer$ = Cell<TextNodeIndex[]>([], (realm) =>
-  realm.link(
-    debouncedIndexer$,
-    realm.pipe(
-      editorSearchTextNodeIndex$,
-      realm.transformer(
-        debounceTime(250),
-        map((index) => {
-          return Array.from(index as Iterable<TextNodeIndex>);
-        })
-      )
-    )
-  )
+export const debouncedIndexer$ = Cell<TextNodeIndex>(EmptyTextNodeIndex, (realm) =>
+  realm.link(debouncedIndexer$, realm.pipe(editorSearchTextNodeIndex$, realm.transformer(debounceTime(250))))
 );
 
 function* searchText(allText: string, searchQuery: string): Generator<[start: number, end: number]> {
@@ -76,7 +65,7 @@ function* searchText(allText: string, searchQuery: string): Generator<[start: nu
  * This allows matches to span across different block-level elements.
  */
 function indexAllTextNodes(root: HTMLElement | null): TextNodeIndex {
-  const allText: string[] = [];
+  let allText: string = "";
   const nodeIndex: Node[] = [];
   const offsetIndex: number[] = [];
 
@@ -106,30 +95,28 @@ function indexAllTextNodes(root: HTMLElement | null): TextNodeIndex {
     for (let i = 0; i < nodeContent.length; i++) {
       nodeIndex.push(currentNode);
       offsetIndex.push(i);
-      allText.push(nodeContent[i]!);
+      allText += nodeContent[i] ?? "";
     }
   }
 
-  return { allText: allText.join(""), nodeIndex, offsetIndex };
+  return { allText, nodeIndex, offsetIndex };
 }
 
-export function* rangeSearchScan(searchQuery: string, textNodeIndex: Iterable<TextNodeIndex>) {
-  for (const { allText, offsetIndex, nodeIndex } of textNodeIndex) {
-    for (const [start, end] of searchText(allText, searchQuery)) {
-      const startOffset = offsetIndex[start];
-      const endOffset = offsetIndex[end];
-      const startNode = nodeIndex[start];
-      const endNode = nodeIndex[end];
-      const range = new Range();
+export function* rangeSearchScan(searchQuery: string, { allText, offsetIndex, nodeIndex }: TextNodeIndex) {
+  for (const [start, end] of searchText(allText, searchQuery)) {
+    const startOffset = offsetIndex[start];
+    const endOffset = offsetIndex[end];
+    const startNode = nodeIndex[start];
+    const endNode = nodeIndex[end];
+    const range = new Range();
 
-      if (startNode === undefined || endNode === undefined || startOffset === undefined || endOffset === undefined) {
-        throw new Error("Invalid range: startNode, endNode, startOffset, or endOffset is undefined.");
-      }
-
-      range.setStart(startNode, startOffset);
-      range.setEnd(endNode, endOffset + 1);
-      yield range;
+    if (startNode === undefined || endNode === undefined || startOffset === undefined || endOffset === undefined) {
+      throw new Error("Invalid range: startNode, endNode, startOffset, or endOffset is undefined.");
     }
+
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset + 1);
+    yield range;
   }
 }
 const focusHighlightRange = (range?: Range | null) => {
@@ -368,7 +355,7 @@ export const searchPlugin = realmPlugin({
         const ranges = realm.getValue(editorSearchRanges$);
         focusHighlightRange(ranges[cursor - 1]);
       });
-      function updateHighlights(searchQuery: string, textNodeIndex: Iterable<TextNodeIndex>) {
+      function updateHighlights(searchQuery: string, textNodeIndex: TextNodeIndex) {
         if (!searchQuery) {
           realm.pub(editorSearchCursor$, 0);
           realm.pub(editorSearchRanges$, []);
@@ -407,11 +394,11 @@ export const searchPlugin = realmPlugin({
         }
         if (rootElement) {
           //why is this in an array?
-          const initialIndex = [indexAllTextNodes(rootElement)];
+          const initialIndex = indexAllTextNodes(rootElement);
           realm.pub(editorSearchTextNodeIndex$, initialIndex);
 
           observer = new MutationObserver(() => {
-            const newIndex = [indexAllTextNodes(rootElement)];
+            const newIndex = indexAllTextNodes(rootElement);
             if (realm.getValue(searchOpen$)) {
               realm.pub(editorSearchTextNodeIndex$, newIndex);
             } else {

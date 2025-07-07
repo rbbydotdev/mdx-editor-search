@@ -38,6 +38,7 @@ export function EditorSearchBar({
   matchTotal,
   className = "",
 }: FloatingSearchBarProps) {
+  const editorSearchBarRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [isReplaceExpanded, setIsReplaceExpanded] = useState<boolean>(false);
   const pauseBlurClose = useRef(false);
@@ -55,41 +56,54 @@ export function EditorSearchBar({
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
   const selectSearchText = () => {
     if (searchInputRef.current && isOpen) {
+      searchInputRef.current.focus();
       searchInputRef.current.select();
     }
   };
   useEffect(() => {
     if (searchInputRef.current) {
-      // this is glitchy, i think due to react 19+
-      // searchInputRef.current.select();
-      searchInputRef.current.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && isOpen) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            prev();
+          } else {
+            next();
+          }
+        }
+      };
+      const ref = searchInputRef.current;
+      ref.addEventListener("keydown", handleKeyDown);
+      return () => {
+        ref.removeEventListener("keydown", handleKeyDown);
+      };
     }
-  }, [searchInputRef.current, isOpen]);
+  }, [searchInputRef.current, isOpen, next, prev]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "f" && isOpen) {
-        selectSearchText();
-      }
-      if (e.key === "Escape" && isOpen) {
-        handleClose();
-      }
-      if (e.key === "Enter" && isOpen) {
-        e.preventDefault();
-        if (e.shiftKey) {
-          prev();
-        } else {
-          next();
+    if (editorSearchBarRef.current) {
+      const handleWindowSearchHotkey = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "f" && isOpen) {
+          selectSearchText();
         }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+      };
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape" && isOpen) {
+          handleClose();
+        }
+      };
+      window.addEventListener("keydown", handleWindowSearchHotkey);
+      const ref = editorSearchBarRef.current;
+      ref.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleWindowSearchHotkey);
+        ref.removeEventListener("keydown", handleKeyDown);
+      };
+    }
   }, [isOpen, handleClose, matchTotal, prev, next, selectSearchText]);
 
-  //this is a work around replacing text node in the lexical way requires a selection range
-  //which when used will trigger a blur of the search bar thus triggering a close
+  //this is a work around replacing text node in via "lexical way" requires a selection range
+  //which when used will trigger a blur of the search bar thus triggering a close when closeOnBlur is true
   const pauseBlurCallback = function pauseBlurCallback() {
     pauseBlurClose.current = true;
     return () => {
@@ -136,6 +150,7 @@ export function EditorSearchBar({
 
   return (
     <div
+      ref={editorSearchBarRef}
       onMouseDown={(e) => {
         const target = e.target as HTMLElement;
         if (target.tagName !== "INPUT" && target.tagName !== "BUTTON") {

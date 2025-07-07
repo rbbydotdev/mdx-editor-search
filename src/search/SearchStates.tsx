@@ -2,10 +2,15 @@ import { TextNodeIndex } from "@/search/searchPlugin";
 import { contentEditableRef$ } from "@mdxeditor/editor";
 import { Cell, debounceTime } from "@mdxeditor/gurx";
 
+export const EmptyTextNodeIndex: TextNodeIndex = {
+  allText: "",
+  nodeIndex: [],
+  offsetIndex: [],
+};
 export const editorSearchTerm$ = Cell<string>("");
 export const editorSearchRanges$ = Cell<Range[]>([]);
 export const editorSearchCursor$ = Cell<number>(0);
-export const editorSearchTextNodeIndex$ = Cell<TextNodeIndex[]>([]);
+export const editorSearchTextNodeIndex$ = Cell<TextNodeIndex>(EmptyTextNodeIndex);
 
 export const searchOpen$ = Cell<boolean>(false);
 export const editorSearchTermDebounced$ = Cell<string>("", (realm) => {
