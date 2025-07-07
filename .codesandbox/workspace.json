@@ -3,14 +3,11 @@
     {
       "views": [
         {
-          "id": "codesandbox.browser"
-        },
-        {
           "id": "codesandbox.browser",
           "options": {
             "port": 5173
           },
-          "closeable": true
+          "closeable": false
         }
       ]
     },
