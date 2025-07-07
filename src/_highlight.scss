@@ -1,0 +1,9 @@
+/*  same as..... export const MDX_SEARCH_NAME = "MdxSearch";
+/*  export const MDX_FOCUS_SEARCH_NAME = "MdxFocusSearch"; */
+
+::highlight(MdxSearch) {
+  background: yellow;
+}
+::highlight(MdxFocusSearch) {
+  background: fuchsia;
+}

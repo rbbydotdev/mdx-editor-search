@@ -22,6 +22,7 @@ interface FloatingSearchBarProps {
   matchTotal: number;
   onSubmit?: () => void;
   className?: string;
+  closeOnBlur?: boolean;
 }
 
 export function EditorSearchBar({
@@ -33,6 +34,7 @@ export function EditorSearchBar({
   replaceAll,
   onClose,
   onChange,
+  closeOnBlur = false,
   matchTotal,
   className = "",
 }: FloatingSearchBarProps) {
@@ -58,7 +60,9 @@ export function EditorSearchBar({
   };
   useEffect(() => {
     if (searchInputRef.current) {
-      searchInputRef.current.select();
+      // this is glitchy, i think due to react 19+
+      // searchInputRef.current.select();
+      searchInputRef.current.focus();
     }
   }, [searchInputRef.current, isOpen]);
 
@@ -142,7 +146,7 @@ export function EditorSearchBar({
       onBlur={(e) => {
         // Only close if focus moves outside the search bar and its children
         // also ignore blur events triggered by the replace input
-        if (!e.currentTarget.contains(e.relatedTarget as Node) && !pauseBlurClose.current) {
+        if (closeOnBlur && !e.currentTarget.contains(e.relatedTarget as Node) && !pauseBlurClose.current) {
           handleClose();
         }
       }}
@@ -162,8 +166,6 @@ export function EditorSearchBar({
                 onClick={() => setIsReplaceExpanded(!isReplaceExpanded)}
                 title={isReplaceExpanded ? "Hide Replace" : "Show Replace"}
               >
-                {/* <ChevronDown className={`transition-transform ${isReplaceExpanded ? "rotate-0" : "-rotate-90"}`} /> */}
-
                 <ChevronRight
                   size={14}
                   className={

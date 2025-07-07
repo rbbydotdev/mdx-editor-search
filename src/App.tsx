@@ -1,4 +1,5 @@
 import { MdxSearchToolbar } from "@/search/MdxEditorSearchToolbar";
+import { searchPlugin } from "@/search/searchPlugin";
 import {
   BoldItalicUnderlineToggles,
   headingsPlugin,
@@ -16,13 +17,14 @@ export default function App() {
   const ref = useRef(null);
 
   return (
-    <div>
+    <div className="absolute m-12 inset-0">
       <MDXEditor
         markdown={LoremText}
         ref={ref}
         plugins={[
           headingsPlugin(),
           listsPlugin(),
+          searchPlugin(),
           toolbarPlugin({
             toolbarContents: () => (
               <>

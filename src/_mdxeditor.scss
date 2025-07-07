@@ -1,0 +1,12 @@
+.mdxeditor-root-contenteditable {
+  overflow: scroll;
+}
+
+.mdxeditor-toolbar {
+  flex-shrink: 0;
+}
+.mdxeditor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

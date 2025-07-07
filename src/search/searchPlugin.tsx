@@ -149,6 +149,7 @@ const scrollToRange = (
   range: Range,
   contentEditable: HTMLElement,
   options?: {
+    scrollElement?: HTMLElement;
     ignoreIfInView?: boolean;
     behavior?: ScrollBehavior;
   }
@@ -360,6 +361,7 @@ export function useEditorSearch() {
 export const searchPlugin = realmPlugin({
   //TODO: ensure proper event cleanup
   postInit(realm) {
+    console.log("postinit");
     const editor = realm.getValue(rootEditor$);
     if (editor && typeof CSS.highlights !== "undefined") {
       realm.sub(editorSearchCursor$, (cursor) => {
@@ -413,10 +415,9 @@ export const searchPlugin = realmPlugin({
             if (realm.getValue(searchOpen$)) {
               realm.pub(editorSearchTextNodeIndex$, newIndex);
             } else {
-              console.log("indexed", newIndex.length);
-              //TODO: indexing on every update is too heavy handed,
-              // an index should only happen when search is made active
-              // searchIsOpen
+              //TODO: indexing on every update may be too heavy handed,
+              // an index should only happen when search is made active IF the
+              // the search closeOn on blur is set to true
               realm.pub(debouncedIndexer$, newIndex);
             }
           });
