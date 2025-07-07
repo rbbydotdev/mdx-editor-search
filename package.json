@@ -28,12 +28,11 @@
     "typescript": "4.4.2",
     "vite": "^6.3.5"
   },
-  "devDependencies": { 
-  },
+  "devDependencies": {},
   "scripts": {
-    "start":"vite",
+    "start": "vite",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm install && tsc && vite build",
     "preview": "vite preview"
   }
 }
