@@ -5,7 +5,7 @@
   "keywords": [],
   "main": "src/index.tsx",
   "engines": {
-    "node": "22"
+    "node": "20"
   },
   "dependencies": {
     "@mdxeditor/editor": "^3.39.1",
