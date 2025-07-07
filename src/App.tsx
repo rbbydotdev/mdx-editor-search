@@ -1,16 +1,15 @@
 import {
   BoldItalicUnderlineToggles,
-  listsPlugin,
   headingsPlugin,
+  listsPlugin,
   ListsToggle,
   MDXEditor,
   toolbarPlugin,
 } from "@mdxeditor/editor";
-import { useState } from "react";
-import "./styles.css";
 import "@mdxeditor/editor/style.css";
-import Markdown from "markdown-to-jsx";
 import { useRef } from "react";
+import LoremText from "./search/LoremText";
+import "./styles.css";
 
 export default function App() {
   const ref = useRef(null);
@@ -18,7 +17,7 @@ export default function App() {
   return (
     <div>
       <MDXEditor
-        markdown="# Hello world"
+        markdown={LoremText}
         ref={ref}
         plugins={[
           headingsPlugin(),
