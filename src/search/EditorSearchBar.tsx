@@ -37,7 +37,6 @@ export function EditorSearchBar({
   className = "",
 }: FloatingSearchBarProps) {
   const [search, setSearch] = useState<string | null>(null);
-  // const replaceTermRef = useRef<string>("");
   const [isReplaceExpanded, setIsReplaceExpanded] = useState<boolean>(false);
   const pauseBlurClose = useRef(false);
   const handleClose = () => {
@@ -58,12 +57,14 @@ export function EditorSearchBar({
     }
   };
   useEffect(() => {
-    selectSearchText();
-  }, [isOpen, selectSearchText]);
+    if (searchInputRef.current) {
+      searchInputRef.current.select();
+    }
+  }, [searchInputRef.current, isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "f" && isOpen) {
         selectSearchText();
       }
       if (e.key === "Escape" && isOpen) {

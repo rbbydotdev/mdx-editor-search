@@ -1,11 +1,20 @@
 import {
+  editorSearchCursor$,
+  editorSearchRanges$,
+  editorSearchScollableContent$,
+  editorSearchTerm$,
+  editorSearchTermDebounced$,
+  editorSearchTextNodeIndex$,
+  searchOpen$,
+} from "@/search/SearchStates";
+import {
   Cell,
-  contentEditableRef$,
   debounceTime,
   lexical,
   map,
   realmPlugin,
   rootEditor$,
+  useCell,
   useCellValue,
   useRealm,
 } from "@mdxeditor/editor";
@@ -13,23 +22,11 @@ const { $createRangeSelection, $getNearestNodeFromDOMNode, $isTextNode, getNeare
 export const MDX_SEARCH_NAME = "MdxSearch";
 export const MDX_FOCUS_SEARCH_NAME = "MdxFocusSearch";
 
-type TextNodeIndex = {
+export type TextNodeIndex = {
   allText: string;
   nodeIndex: Node[];
   offsetIndex: number[];
 };
-
-export const editorSearchTerm$ = Cell<string>("");
-export const editorSearchRanges$ = Cell<Range[]>([]);
-export const editorSearchCursor$ = Cell<number>(0);
-export const editorSearchTextNodeIndex$ = Cell<TextNodeIndex[]>([]);
-export const debouncedSearch$ = Cell<"typing" | "replace">("typing");
-export const editorSearchTermDebounced$ = Cell<string>("", (realm) => {
-  realm.link(editorSearchTermDebounced$, realm.pipe(editorSearchTerm$, realm.transformer(debounceTime(250))));
-});
-export const editorSearchScollableContent$ = Cell<HTMLElement | null>(null, (r) =>
-  r.sub(contentEditableRef$, (cref) => r.pub(editorSearchScollableContent$, cref?.current?.children?.[0] ?? null))
-);
 
 export const debouncedIndexer$ = Cell<TextNodeIndex[]>([], (realm) =>
   realm.link(
@@ -253,6 +250,11 @@ export function useEditorSearch() {
   const search = useCellValue(editorSearchTerm$);
   const currentRange = ranges[cursor - 1] ?? null;
   const contentEditable = useCellValue(editorSearchScollableContent$);
+  const [isSearchOpen, setIsSearchOpen] = useCell(searchOpen$);
+
+  const openSearch = () => setIsSearchOpen(true);
+  const closeSearch = () => setIsSearchOpen(false);
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   const rangeCount = ranges.length;
   const scrollToRangeOrIndex = (
@@ -272,10 +274,6 @@ export function useEditorSearch() {
     }
     realm.pub(editorSearchTermDebounced$, term ?? "");
     //reset cursor
-  };
-
-  const setMode = (mode: "replace" | "typing") => {
-    realm.pub(debouncedSearch$, mode);
   };
 
   const next = () => {
@@ -344,10 +342,14 @@ export function useEditorSearch() {
     prev,
     total: rangeCount,
     cursor,
-    setMode,
     setSearch,
     search,
     currentRange,
+    isSearchOpen,
+    setIsSearchOpen,
+    openSearch,
+    closeSearch,
+    toggleSearch,
     ranges,
     scrollToRangeOrIndex,
     replace,
@@ -356,6 +358,7 @@ export function useEditorSearch() {
 }
 
 export const searchPlugin = realmPlugin({
+  //TODO: ensure proper event cleanup
   postInit(realm) {
     const editor = realm.getValue(rootEditor$);
     if (editor && typeof CSS.highlights !== "undefined") {
@@ -401,14 +404,19 @@ export const searchPlugin = realmPlugin({
           observer = null;
         }
         if (rootElement) {
+          //why is this in an array?
           const initialIndex = [indexAllTextNodes(rootElement)];
           realm.pub(editorSearchTextNodeIndex$, initialIndex);
 
           observer = new MutationObserver(() => {
             const newIndex = [indexAllTextNodes(rootElement)];
-            if (realm.getValue(debouncedSearch$) === "replace") {
+            if (realm.getValue(searchOpen$)) {
               realm.pub(editorSearchTextNodeIndex$, newIndex);
             } else {
+              console.log("indexed", newIndex.length);
+              //TODO: indexing on every update is too heavy handed,
+              // an index should only happen when search is made active
+              // searchIsOpen
               realm.pub(debouncedIndexer$, newIndex);
             }
           });

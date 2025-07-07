@@ -1,3 +1,4 @@
+import { MdxSearchToolbar } from "@/search/MdxEditorSearchToolbar";
 import {
   BoldItalicUnderlineToggles,
   headingsPlugin,
@@ -25,6 +26,7 @@ export default function App() {
           toolbarPlugin({
             toolbarContents: () => (
               <>
+                <MdxSearchToolbar />
                 <BoldItalicUnderlineToggles />
                 <ListsToggle />
               </>

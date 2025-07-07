@@ -8,7 +8,7 @@
     "module": "esnext",
     "strict": true,
     "esModuleInterop": true,
-    "lib": ["dom", "dom.iterable"],
+    "lib": ["es2017", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "moduleResolution": "node"
   }
